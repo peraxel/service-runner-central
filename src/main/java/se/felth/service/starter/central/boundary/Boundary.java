@@ -9,14 +9,19 @@ import com.mongodb.client.MongoDatabase;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -51,86 +56,51 @@ public class Boundary {
 
 	@PostConstruct
 	public void init() {
-		/*
-		try {
-			
-			servers = new HashMap<>();
-			environments = new HashMap<>();
-			deployments = new HashMap<>();
-			services = new HashMap<>();
-			libraries = new HashMap<>();
-			
-			Server server = new Server("s1");
-			servers.put(server.getName(), server);
-			
-			Environment e = new Environment("test1");
-			environments.put(e.getName(), e);
-			
-			Library l = new Library(UUID.randomUUID().toString(), "MySQL JDBC driver", new URI("file:///Users/pa/mysql-connector-java-5.1.23-bin.jar"));
-			libraries.put(l.getId(), l);
-			
-			ServiceVersion v = new ServiceVersion();
-			v.setName("1.0");
-			v.setArtifactLocation(new URI("file:///Users/pa/NetBeansProjects/demo/target/demo-1.0-SNAPSHOT.war"));
-			v.setLibraries(Arrays.asList(l));
-			
-			Service s = new Service();
-			s.setName("Demo");
-			s.getVersions().add(v);
-			Deployment d = new Deployment();
-			
-			d.setId(UUID.randomUUID().toString());
-			d.setServerIds(Arrays.asList(server.));
-			d.setServiceVersion(v);
-			deployments.put(d.getId(), d);
-		} catch (URISyntaxException ex) {
-			Logger.getLogger(Boundary.class.getName()).log(Level.SEVERE, null, ex);
-		}
-		 */
+
 	}
 
 	public List<Service> getServices() {
 		return ds.find(Service.class).asList();
 	}
-	
+
 	public Service getService(String id) {
 		return getService(new ObjectId(id));
 	}
-	
+
 	public Service getService(ObjectId id) {
 		return ds.find(Service.class).filter("id ==", id).get();
 	}
-	
+
 	public Service addService(Service s) {
 		Key<Service> k = ds.save(s);
 		LOG.info(k.getId().getClass().getName());
-		return getService((ObjectId)k.getId());
+		return getService((ObjectId) k.getId());
 	}
-	
+
 	public Library addLibrary(Library s) {
 		Key<Library> k = ds.save(s);
-		
-		return getLibrary((ObjectId)k.getId());
+
+		return getLibrary((ObjectId) k.getId());
 	}
-	
+
 	public Service updateService(Service s) {
 		ds.save(s);
-		
+
 		return getService(s.getId());
 	}
-	
+
 	public List<Server> getServers() {
 		return ds.find(Server.class).asList();
 	}
-	
+
 	public Server getServer(String id) {
 		return ds.find(Server.class).filter("id ==", new ObjectId(id)).get();
 	}
-	
+
 	public Server addServer(Server s) {
 		Key<Server> k = ds.save(s);
 		LOG.info(k.getId().getClass().getName());
-		return getServer((String)k.getId());
+		return getServer((String) k.getId());
 	}
 
 	public FileInputStream getArtifactByDeploymentName(String deploymentName) throws FileNotFoundException {
@@ -151,13 +121,11 @@ public class Boundary {
 
 		return null;
 	}
-	
+
 	public FileInputStream getArtifactByLibraryId(String libraryId) throws FileNotFoundException {
-		
 
 		return new FileInputStream(new File(getLibrary(libraryId).getArtifactLocation()));
-		
-		
+
 	}
 
 	public List<ServerDeployment> getDeploymentsForServer(String server) {
@@ -181,7 +149,7 @@ public class Boundary {
 						sd.setServiceVersionName(s.getName());
 						sd.setServiceProperties(d.getServiceProperties());
 						sd.setJdbcConnections(d.getJdbcConnections());
-						
+
 						list.add(sd);
 					}
 				}
@@ -194,6 +162,29 @@ public class Boundary {
 		//return deployments.values().stream().filter(d -> d.getServers().contains(s)).collect(Collectors.toList());
 	}
 
+	public boolean setServiceVersionArtifact(String serviceId, String serviceVersionName, byte[] artifact) {
+
+		Service s = getService(serviceId);
+		AtomicBoolean result = new AtomicBoolean(false);
+		
+		s.getVersions().stream().filter(sv -> sv.getName().equals(serviceVersionName)).findFirst().ifPresent(sv -> {
+			Path p = Paths.get("/tmp", String.format("%s-%s.war", serviceId, serviceVersionName));
+			sv.setArtifactLocation(p.toUri());
+			try {
+				Files.write(p, artifact);
+				ds.save(s);
+				result.set(true);
+			} catch (IOException ex) {
+				LOG.log(Level.WARNING, "Failed to save service version artifact", ex);
+				result.set(false);
+			}
+		});
+		
+
+		return result.get();
+		
+	}
+
 	public List<Library> getLibraries() {
 		return ds.find(Library.class).asList();
 	}
@@ -201,11 +192,9 @@ public class Boundary {
 	public Library getLibrary(String id) {
 		return getLibrary(new ObjectId(id));
 	}
-	
+
 	public Library getLibrary(ObjectId id) {
 		return ds.find(Library.class).filter("id == ", id).get();
 	}
-	
-	
-	
+
 }

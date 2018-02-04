@@ -62,4 +62,17 @@ public class ServiceResource {
 		
 		return b.updateService(s);
 	}
+	
+	@PUT
+	@Path("{id}/{sv-name}/artifact")
+	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
+	public void putServiceVersionArtifact(@PathParam("id") String id, @PathParam("sv-name") String svName, byte [] artifact) {
+		if (artifact == null) {
+			throw new WebApplicationException(400);
+		}
+		
+		if(!b.setServiceVersionArtifact(id, svName, artifact)) {
+			throw new WebApplicationException(500);
+		}
+	}
 }
