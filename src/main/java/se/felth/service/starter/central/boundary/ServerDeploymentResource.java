@@ -19,7 +19,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import se.felth.service.starter.central.entity.ServerDeployment;
+import se.felth.service.starter.central.entity.DeploymentInstance;
 
 /**
  *
@@ -33,7 +33,7 @@ public class ServerDeploymentResource {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public List<ServerDeployment> get(@QueryParam("server") String server) {
+	public List<DeploymentInstance> get(@QueryParam("server") String server) {
 		return b.getDeploymentsForServer(server);
 	}
 	

@@ -7,96 +7,125 @@ package se.felth.service.starter.central.entity;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  *
  * @author pa
  */
-
 public class Deployment {
-	String name;
-	List<String> serverIds;
-	String pingPath;
-	Boolean enableHz;
-	Integer httpPort;
-	Integer httpsPort;
-	Integer hzPort;
-	List<JdbcConnection> jdbcConnections;
-	ServiceProperties serviceProperties;
-	
-	public String getName() {
-		return name;
-	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    String name;
+    List<ServerDeployment> serverDeployments;
+    String pingPath;
+    Boolean enableHz;
+    HazelcastConfiguration hzConfiguration;
+    Integer httpPort;
+    Integer httpsPort;
+    Integer initialHeapSize;
+    Integer maxHeapSize;
+    List<JdbcConnection> jdbcConnections;
+    ServiceProperties serviceProperties;
+    Map<String,String> systemProperties;
 
-	public List<String> getServerIds() {
-		return serverIds == null ? Arrays.asList() : serverIds;
-	}
+    public Map<String, String> getSystemProperties() {
+        return systemProperties;
+    }
 
-	public void setServerIds(List<String> serverIds) {
-		this.serverIds = serverIds;
-	}
+    public void setSystemProperties(Map<String, String> systemProperties) {
+        this.systemProperties = systemProperties;
+    }
+    
+    
+    public HazelcastConfiguration getHzConfiguration() {
+        return hzConfiguration;
+    }
 
-	public String getPingPath() {
-		return pingPath;
-	}
+    public void setHzConfiguration(HazelcastConfiguration hzConfiguration) {
+        this.hzConfiguration = hzConfiguration;
+    }
 
-	public void setPingPath(String pingPath) {
-		this.pingPath = pingPath;
-	}
+    
+    public Integer getInitialHeapSize() {
+        return initialHeapSize;
+    }
 
-	public Boolean getEnableHz() {
-		return enableHz;
-	}
+    public void setInitialHeapSize(Integer initialHeapSize) {
+        this.initialHeapSize = initialHeapSize;
+    }
 
-	public void setEnableHz(Boolean enableHz) {
-		this.enableHz = enableHz;
-	}
+    public Integer getMaxHeapSize() {
+        return maxHeapSize;
+    }
 
-	public Integer getHttpPort() {
-		return httpPort;
-	}
+    public void setMaxHeapSize(Integer maxHeapSize) {
+        this.maxHeapSize = maxHeapSize;
+    }
 
-	public void setHttpPort(Integer httpPort) {
-		this.httpPort = httpPort;
-	}
+    
+    public String getName() {
+        return name;
+    }
 
-	public Integer getHttpsPort() {
-		return httpsPort;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setHttpsPort(Integer httpsPort) {
-		this.httpsPort = httpsPort;
-	}
+    public List<ServerDeployment> getServerDeployments() {
+        return serverDeployments;
+    }
 
-	public Integer getHzPort() {
-		return hzPort;
-	}
+    public void setServerDeployments(List<ServerDeployment> servers) {
+        this.serverDeployments = servers;
+    }
 
-	public void setHzPort(Integer hzPort) {
-		this.hzPort = hzPort;
-	}
+    public String getPingPath() {
+        return pingPath;
+    }
 
-	public List<JdbcConnection> getJdbcConnections() {
-		return jdbcConnections;
-	}
+    public void setPingPath(String pingPath) {
+        this.pingPath = pingPath;
+    }
 
-	public void setJdbcConnections(List<JdbcConnection> jdbcConnections) {
-		this.jdbcConnections = jdbcConnections;
-	}
+    public Boolean getEnableHz() {
+        return enableHz;
+    }
 
-	public ServiceProperties getServiceProperties() {
-		return serviceProperties;
-	}
+    public void setEnableHz(Boolean enableHz) {
+        this.enableHz = enableHz;
+    }
 
-	public void setServiceProperties(ServiceProperties serviceProperties) {
-		this.serviceProperties = serviceProperties;
-	}
+    public Integer getHttpPort() {
+        return httpPort;
+    }
 
-	
-	
+    public void setHttpPort(Integer httpPort) {
+        this.httpPort = httpPort;
+    }
+
+    public Integer getHttpsPort() {
+        return httpsPort;
+    }
+
+    public void setHttpsPort(Integer httpsPort) {
+        this.httpsPort = httpsPort;
+    }
+
+    public List<JdbcConnection> getJdbcConnections() {
+        return jdbcConnections;
+    }
+
+    public void setJdbcConnections(List<JdbcConnection> jdbcConnections) {
+        this.jdbcConnections = jdbcConnections;
+    }
+
+    public ServiceProperties getServiceProperties() {
+        return serviceProperties;
+    }
+
+    public void setServiceProperties(ServiceProperties serviceProperties) {
+        this.serviceProperties = serviceProperties;
+    }
+
 }

@@ -5,51 +5,38 @@
  */
 package se.felth.service.starter.central.entity;
 
-import java.net.URI;
-import java.util.List;
-
 /**
  *
- * @author pa
+ * @author jnj112
  */
-public class ServerDeployment extends Deployment {
-	String serviceName;
-	String serviceVersionName;
-	URI artifactLocation;
-	List<String> libraryIds;
+public class ServerDeployment {
+    String serverId;
+    Boolean requestedStatus;
+    Boolean actualStatus;
 
-	public String getServiceName() {
-		return serviceName;
-	}
+    public String getServerId() {
+        return serverId;
+    }
 
-	public void setServiceName(String serviceName) {
-		this.serviceName = serviceName;
-	}
+    public void setServerId(String serverId) {
+        this.serverId = serverId;
+    }
 
-	public String getServiceVersionName() {
-		return serviceVersionName;
-	}
+    public Boolean getRequestedStatus() {
+        return requestedStatus;
+    }
 
-	public void setServiceVersionName(String serviceVersionName) {
-		this.serviceVersionName = serviceVersionName;
-	}
+    public void setRequestedStatus(Boolean requestedStatus) {
+        this.requestedStatus = requestedStatus;
+    }
 
-	public URI getArtifactLocation() {
-		return artifactLocation;
-	}
+    public Boolean getActualStatus() {
+        return actualStatus;
+    }
 
-	public void setArtifactLocation(URI artifactLocation) {
-		this.artifactLocation = artifactLocation;
-	}
-
-	public List<String> getLibraryIds() {
-		return libraryIds;
-	}
-
-	public void setLibraryIds(List<String> libraryIds) {
-		this.libraryIds = libraryIds;
-	}
-
-	
-	
+    public void setActualStatus(Boolean actualStatus) {
+        this.actualStatus = actualStatus;
+    }
+    
+    
 }

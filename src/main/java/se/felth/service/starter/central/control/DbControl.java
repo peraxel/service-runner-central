@@ -7,6 +7,7 @@ package se.felth.service.starter.central.control;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
+import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.ejb.Singleton;
@@ -23,32 +24,41 @@ import org.mongodb.morphia.Morphia;
 @Singleton
 //@Startup
 public class DbControl {
-	MongoClient client = new MongoClient();
-	private Morphia morphia;
-	private Datastore datastore;
-	
-	@PostConstruct
-	public void init() {
-		client = new MongoClient();
-		morphia = new Morphia();
-		datastore = morphia.createDatastore(client, "ssc");
 
-	}
-	
-	@Produces
-	public MongoDatabase getDatabase() {
-		return client.getDatabase("ssc");
-	}
-	
-	@Produces
-	public Datastore getDatastore() {
-		return datastore;
-	}
-	
-	
-	@PreDestroy
-	public void destroy() {
-		client.close();
-		
-	}
+    private static final Logger LOG = Logger.getLogger(DbControl.class.getName());
+
+    MongoClient client = new MongoClient();
+    private Morphia morphia;
+    private Datastore datastore;
+
+    @PostConstruct
+    public void init() {
+        if (client != null) {
+            LOG.info("MongoDB client was not null");
+        }
+        client = new MongoClient();
+        morphia = new Morphia();
+        datastore = morphia.createDatastore(client, "ssc");
+
+    }
+
+    @Produces
+    public MongoDatabase getDatabase() {
+        return client.getDatabase("ssc");
+    }
+
+    @Produces
+    public Datastore getDatastore() {
+        return datastore;
+    }
+
+    @PreDestroy
+    public void destroy() {
+        LOG.info("Running DbControl @PreDestroy");
+        
+        
+        client.close();
+        
+        LOG.info("Client closed in @PreDestroy");
+    }
 }

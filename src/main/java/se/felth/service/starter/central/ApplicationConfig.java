@@ -32,9 +32,10 @@ public class ApplicationConfig extends Application {
 	 */
 	private void addRestResourceClasses(Set<Class<?>> resources) {
 		resources.add(se.felth.service.starter.central.boundary.LibraryResource.class);
+		resources.add(se.felth.service.starter.central.boundary.MavenRepositoryResource.class);
 		resources.add(se.felth.service.starter.central.boundary.ServerDeploymentResource.class);
 		resources.add(se.felth.service.starter.central.boundary.ServerResource.class);
-		resources.add(se.felth.service.starter.central.boundary.ServiceResource.class);
+        resources.add(se.felth.service.starter.central.boundary.ServiceResource.class);
 	}
 	
 }
