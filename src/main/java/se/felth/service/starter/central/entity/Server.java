@@ -9,61 +9,77 @@ import org.mongodb.morphia.annotations.Id;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 /**
  *
  * @author pa
  */
 public class Server {
-	@Id
-	String id;
-	String name;
 
-	public Server() {
-		
-	}
+    @Id
+    String id;
+    String name;
+    String publicKey;
+    String privateKey;
 
-	public String getId() {
-		return id;
-	}
+    public Server() {
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    }
 
-	
-	public String getName() {
-		return name;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	@Override
-	public int hashCode() {
-		int hash = 7;
-		hash = 61 * hash + Objects.hashCode(this.name);
-		return hash;
-	}
+    public String getName() {
+        return name;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final Server other = (Server) obj;
-		if (!Objects.equals(this.name, other.name)) {
-			return false;
-		}
-		return true;
-	}
-	
-	
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getPublicKey() {
+        return publicKey;
+    }
+
+    public void setPublicKey(String publicKey) {
+        this.publicKey = publicKey;
+    }
+
+    public String getPrivateKey() {
+        return privateKey;
+    }
+
+    public void setPrivateKey(String privateKey) {
+        this.privateKey = privateKey;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 61 * hash + Objects.hashCode(this.name);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Server other = (Server) obj;
+        if (!Objects.equals(this.name, other.name)) {
+            return false;
+        }
+        return true;
+    }
+
 }

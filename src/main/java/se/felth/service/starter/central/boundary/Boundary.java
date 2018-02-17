@@ -5,19 +5,38 @@
  */
 package se.felth.service.starter.central.boundary;
 
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.internal.org.bouncycastle.util.io.pem.PemObject;
+import com.auth0.jwt.internal.org.bouncycastle.util.io.pem.PemReader;
+import com.auth0.jwt.internal.org.bouncycastle.util.io.pem.PemWriter;
+import static com.auth0.jwt.pem.PemWriter.writePrivateKey;
+import static com.auth0.jwt.pem.PemWriter.writePublicKey;
 import com.mongodb.client.MongoDatabase;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.Base64.Decoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +48,7 @@ import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.ejb.Singleton;
 import javax.inject.Inject;
+import javax.json.Json;
 import javax.swing.event.ListSelectionEvent;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
@@ -43,6 +63,7 @@ import se.felth.service.starter.central.entity.Library;
 import se.felth.service.starter.central.entity.MavenRepository;
 import se.felth.service.starter.central.entity.Server;
 import se.felth.service.starter.central.entity.DeploymentInstance;
+import se.felth.service.starter.central.entity.PemKeyPair;
 import se.felth.service.starter.central.entity.Service;
 import se.felth.service.starter.central.entity.ServiceVersion;
 
@@ -105,10 +126,87 @@ public class Boundary {
         return ds.find(Server.class).filter("id ==", new ObjectId(id)).get();
     }
 
+    public PemKeyPair createKeyPair() throws NoSuchAlgorithmException, NoSuchProviderException, IOException {
+        // create key pair
+        final KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+        generator.initialize(2048);
+        final KeyPair keyPair = generator.generateKeyPair();
+        // write private key
+        final RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+        StringWriter privateSw = new StringWriter();
+        PemWriter privateWriter = new PemWriter(privateSw);
+        privateWriter.writeObject(new PemObject("RSA PRIVATE KEY", privateKey.getEncoded()));
+        privateWriter.close();
+        
+        // write public key
+        final RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+        StringWriter publicSw = new StringWriter();
+        PemWriter publicWriter = new PemWriter(publicSw);
+        publicWriter.writeObject(new PemObject("RSA PUBLIC KEY", publicKey.getEncoded()));
+        publicWriter.close();
+        
+        return new PemKeyPair(publicSw.toString(), privateSw.toString());
+    }
+
     public Server addServer(Server s) {
+        PemKeyPair kp;
+        try {
+            kp = createKeyPair();
+            s.setPublicKey(kp.getPublicKey());
+        } catch (NoSuchAlgorithmException | NoSuchProviderException | IOException ex) {
+            Logger.getLogger(Boundary.class.getName()).log(Level.SEVERE, null, ex);
+            throw new RuntimeException("Failed to create keys", ex);
+        }
+
         Key<Server> k = ds.save(s);
+
         LOG.info(k.getId().getClass().getName());
-        return getServer((String) k.getId());
+        s = getServer((String) k.getId());
+        s.setPrivateKey(kp.getPrivateKey());
+
+        return s;
+    }
+
+    public String serverAuth(String token) {
+        Decoder dec = Base64.getDecoder();
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        
+        String[] tokenParts = token.split("\\.");
+        String iss = Json.createReader(new StringReader(new String(dec.decode(tokenParts[1])))).readObject().getString("iss");
+        Server s = getServer(iss);
+        //new PemReader(new StringReader(s.getPublicKey())).readPemObject().
+        
+
+        Map<String, Object> claims;
+        try {
+            JWTVerifier verifier = new JWTVerifier(getPemPublicKey(s.getPublicKey()));
+            claims = verifier.verify(token);
+            LOG.info(claims.toString());
+            //return new UserInfo(claims.get("sub").toString(), null, null, null, null, null);
+            return (String)claims.get("iss");
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "Token validation failed", e);
+            return null;
+        }
+    }
+    
+
+    
+    public PublicKey getPemPublicKey(String pem) throws Exception {
+        String publicKeyPEM = pem.replace("-----BEGIN PUBLIC KEY-----", "");
+        publicKeyPEM = publicKeyPEM.replace("-----END PUBLIC KEY-----", "");
+        publicKeyPEM = publicKeyPEM.replace("-----BEGIN RSA PUBLIC KEY-----", "");
+        publicKeyPEM = publicKeyPEM.replace("-----END RSA PUBLIC KEY-----", "");
+        publicKeyPEM = publicKeyPEM.replace("\n", "");
+
+        Decoder dec = Base64.getDecoder();
+        byte[] decoded = dec.decode(publicKeyPEM);
+
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        return kf.generatePublic(spec);
     }
 
     public InputStream readArtifactFromDisk(URI artifactLocation) throws FileNotFoundException {
@@ -136,7 +234,7 @@ public class Boundary {
                 break;
             }
         }
-        
+
         return artifactIs;
     }
 
@@ -182,7 +280,7 @@ public class Boundary {
         for (Service s : getServices()) {
             for (ServiceVersion sv : s.getVersions()) {
                 for (Deployment d : sv.getDeployments()) {
-                    if (d.getServerDeployments().stream().filter(u -> u.getRequestedStatus()).filter(u -> u.getServerId().equals(server)).count() > 0) {
+                    if (d.getServerDeployments() != null && d.getServerDeployments().stream().filter(u -> u.getRequestedStatus()).filter(u -> u.getServerId().equals(server)).count() > 0) {
                         DeploymentInstance di = new DeploymentInstance();
                         di.setArtifactLocation(sv.getArtifactLocation());
                         di.setEnableHz(d.getEnableHz());
