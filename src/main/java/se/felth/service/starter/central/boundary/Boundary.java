@@ -64,6 +64,7 @@ import se.felth.service.starter.central.entity.MavenRepository;
 import se.felth.service.starter.central.entity.Server;
 import se.felth.service.starter.central.entity.DeploymentInstance;
 import se.felth.service.starter.central.entity.PemKeyPair;
+import se.felth.service.starter.central.entity.ServerDeployment;
 import se.felth.service.starter.central.entity.Service;
 import se.felth.service.starter.central.entity.ServiceVersion;
 
@@ -238,13 +239,14 @@ public class Boundary {
         return artifactIs;
     }
 
-    public InputStream getArtifactByDeploymentName(String deploymentName) throws FileNotFoundException {
+    public InputStream getArtifactByDeploymentName(String deploymentName, String serverId) throws FileNotFoundException {
         URI artifactLocation;
 
         for (Service s : getServices()) {
             for (ServiceVersion sv : s.getVersions()) {
                 for (Deployment d : sv.getDeployments()) {
-                    if (d.getName().equals(deploymentName)) {
+                    // Check if deployment name matches input and input serverId is in list of servers that should run this deployment
+                    if (d.getName().equals(deploymentName) && d.getServerDeployments().stream().map(sd -> sd.getServerId()).anyMatch(sd -> sd.equals(serverId))) {
                         if (ARTIFACT_LOCATION_TYPE_DISK.equals(sv.getArtifactLocationType())) {
                             artifactLocation = sv.getArtifactLocation();
                             return readArtifactFromDisk(artifactLocation);
@@ -274,6 +276,26 @@ public class Boundary {
 
     }
 
+    public ServerDeployment setServerDeploymentActual(String deploymentName, String serverId, boolean status) {
+        for (Service s : getServices()) {
+            for (ServiceVersion sv : s.getVersions()) {
+                for (Deployment d : sv.getDeployments()) {
+                    if (d.getServerDeployments() != null) {
+                        for(ServerDeployment sd : d.getServerDeployments()) {
+                            if (sd.getServerId().equals(serverId)) {
+                                sd.setActualStatus(status);
+                                updateService(s);
+                                return sd;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+    
     public List<DeploymentInstance> getDeploymentsForServer(String server) {
         List<DeploymentInstance> list = new ArrayList<>();
 
